@@ -1,21 +1,16 @@
-Certainly — here is a more formal, professional `README.md` with **step-by-step instructions**, a **clear explanation of layers**, and no emojis or informal tone. It’s written in a format suitable for teams, technical documentation, or onboarding new contributors.
+Here is the **complete, updated `README.md` file** with clear step-by-step instructions including both `dbt run` and `dbt build` workflows:
 
 ---
 
 ```markdown
 # dbt Snowflake Data Pipeline
 
-This repository contains a dbt project that implements a complete data pipeline on Snowflake using the Jaffle Shop and Stripe datasets. The project follows a layered architecture to transform raw data into clean, business-ready models.
+This repository implements a complete data pipeline using [dbt](https://docs.getdbt.com/) with Snowflake as the data warehouse. It processes raw data from the Jaffle Shop and Stripe into cleaned and aggregated models suitable for analytics and reporting.
 
-## Overview
-
-This pipeline is structured into three logical layers:
-
-1. **Raw**: Mirrors the Snowflake `RAW` database tables directly.
-2. **Curated**: Performs cleaning, deduplication, and standardization of raw data.
-3. **Presentation**: Provides business-level aggregations, metrics, and segmentation.
-
-Data is initially loaded into Snowflake from public S3 buckets. dbt then processes the data through each layer, producing insights that can be consumed by analytics or BI tools.
+The project uses a layered approach to data transformation:
+- **Raw**: Mirrors the structure of the Snowflake raw tables.
+- **Curated**: Cleans and standardizes raw data using dbt staging models.
+- **Presentation**: Provides business-level metrics and aggregations.
 
 ---
 
@@ -24,9 +19,9 @@ Data is initially loaded into Snowflake from public S3 buckets. dbt then process
 ```
 my_dbt_project/
 ├── models/
-│   ├── raw/              # Mirrors raw Snowflake tables
-│   ├── curated/          # Cleaned, deduplicated, and standardized data
-│   └── presentation/     # Aggregated business-level models
+│   ├── raw/              # Pulls from Snowflake RAW database tables
+│   ├── curated/          # Staging models for cleaning and standardizing
+│   └── presentation/     # Aggregated business models
 ├── dbt_project.yml       # dbt project configuration
 ├── .gitignore
 └── README.md
@@ -36,14 +31,14 @@ my_dbt_project/
 
 ## Prerequisites
 
-- Python 3.8 or higher
-- Snowflake account (with access to a warehouse, role, and schema)
+- Python 3.8+
 - dbt installed via pip:
 
 ```bash
 pip install dbt-snowflake
 ```
 
+- Snowflake account and credentials
 - Raw data preloaded into Snowflake:
   - `RAW.JAFFLE_SHOP.CUSTOMERS`
   - `RAW.JAFFLE_SHOP.ORDERS`
@@ -51,7 +46,7 @@ pip install dbt-snowflake
 
 ---
 
-## Initial Setup
+## Setup Instructions
 
 ### 1. Clone the Repository
 
@@ -60,9 +55,9 @@ git clone https://github.com/curious-bigcat/my_dbt_project.git
 cd my_dbt_project
 ```
 
-### 2. Configure dbt Profile
+### 2. Configure Your Snowflake Profile
 
-Create or edit your `~/.dbt/profiles.yml` file:
+Create or edit the file `~/.dbt/profiles.yml`:
 
 ```yaml
 snowflakebs:
@@ -70,8 +65,8 @@ snowflakebs:
   outputs:
     dev:
       type: snowflake
-      account: <your_account_identifier>
-      user: <your_username>
+      account: <your_account_id>
+      user: <your_user>
       password: <your_password>
       role: <your_role>
       warehouse: transforming
@@ -80,98 +75,101 @@ snowflakebs:
       threads: 4
 ```
 
-Make sure to replace the placeholders with your actual Snowflake credentials and environment details.
+> Replace placeholders with your Snowflake account information.
 
 ---
 
 ## Running the Pipeline
 
-### 1. Test the dbt Connection
+### Step-by-Step Development Workflow
+
+Run only the models:
 
 ```bash
-dbt debug
+dbt run
 ```
 
-This checks that your profile and Snowflake access are configured correctly.
-
-### 2. Build All Models
+Run tests (only if you've defined them in `schema.yml`):
 
 ```bash
-dbt build
+dbt test
 ```
 
-This command executes all dbt models (raw, curated, presentation) in dependency order, and runs any associated tests.
+View compiled SQL and artifacts:
 
-### 3. Generate and View Documentation
+```bash
+dbt compile
+```
+
+Generate and view documentation:
 
 ```bash
 dbt docs generate
 dbt docs serve
 ```
 
-Navigate to `http://localhost:8000` to view the interactive documentation and model lineage graph.
+### Full Build (Models + Tests + Snapshots)
+
+Run everything in dependency order:
+
+```bash
+dbt build
+```
 
 ---
 
-## Model Layer Details
+## Data Layer Breakdown
 
 ### Raw Layer
 
-- `raw_customers.sql`: Selects all columns from `RAW.JAFFLE_SHOP.CUSTOMERS`
-- `raw_orders.sql`: Selects all columns from `RAW.JAFFLE_SHOP.ORDERS`
-- `raw_payments.sql`: Selects all columns from `RAW.STRIPE.PAYMENT`
+Pulls directly from Snowflake raw tables. These models are basic passthrough views.
 
-These models are materialized as views in the `analytics.raw` schema.
+- `raw_customers.sql` → `RAW.JAFFLE_SHOP.CUSTOMERS`
+- `raw_orders.sql` → `RAW.JAFFLE_SHOP.ORDERS`
+- `raw_payments.sql` → `RAW.STRIPE.PAYMENT`
 
 ### Curated Layer
 
-- Cleans data (e.g., `initcap` on names)
-- Deduplicates records using `row_number() over (...)` based on load timestamps
-- Extracts `year` and `month` fields for temporal reporting
+- Deduplicates orders and payments using window functions
+- Applies naming conventions and formats
+- Adds derived fields like `order_year`, `payment_month`
 
-Models include:
+Models:
 - `stg_customers`
 - `stg_orders`
 - `stg_payments`
 
 ### Presentation Layer
 
-Models perform business-level aggregations and segmentation, including:
-
-- `customer_order_summary`: Joins orders and payments by customer
-- `rfm_segmentation`: Classifies customers into RFM segments
-- `rolling_7day_revenue`: Computes 7-day rolling revenue totals
-- `anomalous_payments`: Detects outlier payments using statistical thresholds
-- `first_vs_repeat_orders`: Analyzes behavior of new vs returning customers
+Contains advanced analytics and metrics:
+- `customer_order_summary`: Revenue and order count per customer
+- `rfm_segmentation`: RFM-based customer segmentation
+- `rolling_7day_revenue`: Rolling window revenue using `window functions`
+- `anomalous_payments`: Outlier detection using z-score logic
+- `first_vs_repeat_orders`: Behavioral segmentation of new vs returning customers
 
 ---
 
-## Common Queries
-
-To explore your presentation layer models, use queries like:
+## Example Queries
 
 ```sql
--- Top 10 customers by revenue
-SELECT * 
-FROM analytics.presentation.customer_order_summary
-ORDER BY total_revenue DESC
-LIMIT 10;
+-- View top revenue-generating customers
+SELECT * FROM analytics.presentation.customer_order_summary
+ORDER BY total_revenue DESC;
 
--- All anomalous payments
-SELECT * 
-FROM analytics.presentation.anomalous_payments
+-- View anomalous payments flagged as outliers
+SELECT * FROM analytics.presentation.anomalous_payments
 WHERE anomaly_flag != 'Normal';
 ```
 
 ---
 
-## Recommendations for Production
+## Recommended Enhancements
 
-- Use environment variables or secret management for sensitive credentials
-- Add `sources.yml` for formal source definitions and lineage tracking
-- Add `schema.yml` files for tests like `not_null`, `unique`, etc.
-- Consider using `snapshots` to track slowly changing data
-- Deploy via dbt Cloud or CI/CD pipelines (e.g., GitHub Actions)
+- Add `sources.yml` to define Snowflake sources formally
+- Add `schema.yml` files with tests like `not_null`, `unique`, `relationships`
+- Create `snapshots` for historical tracking of changes
+- Configure GitHub Actions or dbt Cloud for deployment automation
 
 ---
 
@@ -183,12 +181,12 @@ This project is licensed under the MIT License.
 
 ## Maintainer
 
-This project is maintained by [curious-bigcat](https://github.com/curious-bigcat).
+Maintained by [curious-bigcat](https://github.com/curious-bigcat).
 ```
 
 ---
 
 Would you like me to:
-- Save and commit this directly to your repo as `README.md`?
-- Add a `.gitignore` and basic `schema.yml` with tests?
-- Set up GitHub Actions for automated `dbt build`?
+- Save this as `README.md` in your local project?
+- Commit and push it to GitHub for you?
+- Also scaffold a `.gitignore`, `schema.yml`, or GitHub Actions CI next?
