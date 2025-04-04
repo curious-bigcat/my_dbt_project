@@ -1,0 +1,19 @@
+name: my_dbt_project
+version: '1.0'
+config-version: 2
+
+profile: snowflakebs
+
+model-paths: ["models"]
+
+models:
+  my_dbt_project:
+    raw:
+      +schema: raw
+      +materialized: table
+    curated:
+      +schema: curated
+      +materialized: view
+    presentation:
+      +schema: presentation
+      +materialized: view
