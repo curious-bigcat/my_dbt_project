@@ -12,22 +12,6 @@ The project uses a layered approach to data transformation:
 - **Curated**: Cleans and standardizes raw data using dbt staging models.
 - **Presentation**: Provides business-level metrics and aggregations.
 
----
-
-## Project Structure
-
-```
-my_dbt_project/
-├── models/
-│   ├── raw/              # Pulls from Snowflake RAW database tables
-│   ├── curated/          # Staging models for cleaning and standardizing
-│   └── presentation/     # Aggregated business models
-├── dbt_project.yml       # dbt project configuration
-├── .gitignore
-└── README.md
-```
-
----
 
 ## Prerequisites
 
